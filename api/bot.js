@@ -4,7 +4,7 @@ const Redis = require('ioredis');
 require('dotenv').config();
 
 const bot = new Telegraf(process.env.TELEGRAM_BOT_TOKEN);
-const redis = new Redis(process.env.REDIS_URL);
+const redis = new Redis();
 
 // Commands
 bot.command('link', async (ctx) => {
