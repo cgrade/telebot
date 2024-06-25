@@ -4,12 +4,12 @@ const Redis = require('ioredis');
 require('dotenv').config();
 
 const bot = new Telegraf(process.env.TELEGRAM_BOT_TOKEN);
-const redis = new Redis(process.env.REDIS_URL);
+const redis = new Redis();
 
 // Commands
 bot.command('link', async (ctx) => {
     const userId = ctx.from.id;
-    const referralLink = `https://t.me/testingBotApi_bot?start=${userId}-${uuidv4()}`;
+    const referralLink = `https://t.me/testingBotApi_bot?start=${userId}`;
     await redis.sadd(`user:${userId}:links`, referralLink);
     ctx.reply(`Your referral link: ${referralLink}`);
 });
@@ -41,10 +41,15 @@ bot.start(async (ctx) => {
     const referrerId = ctx.startPayload.split('-')[0];
     if (referrerId) {
         await redis.sadd(`user:${referrerId}:referrals`, ctx.from.id);
-        ctx.reply('Welcome! Here is your link to the group/channel: https://t.me/+2YThyEqhb35jMGY0');
+        ctx.reply('Welcome! Here is your link to the group/channel: https://t.me/+qKanFchZSsBmNDU0');
     } else {
-        ctx.reply('Welcome! Here is your link to the group/channel: https://t.me/+2YThyEqhb35jMGY0');
+        ctx.reply('Welcome! Here is your link to the group/channel: https://t.me/+qKanFchZSsBmNDU0');
     }
 });
 
 bot.launch();
+
+
+module.exports = (req, res) => {
+    res.status(200).send('Bot is running');
+};
