@@ -44,16 +44,45 @@ bot.command('referrals', async (ctx) => {
 bot.command('leaderboard', async (ctx) => {
     try {
         const allKeys = await redis.keys('user:*:referrals');
-        const leaderboard = await Promise.all(allKeys.map(async (key) => {
-            const userId = key.split(':')[1];
-            const count = await redis.scard(key);
-            const user = await bot.telegram.getChat(userId);
-            return { name: user.username || user.first_name, count };
-        }));
+        const userScores = [];
 
-        leaderboard.sort((a, b) => b.count - a.count);
-        const leaderboardText = leaderboard.map((entry, index) => `${index + 1}. ${entry.name}: ${entry.count}`).join('\n');
-        ctx.reply(leaderboardText);
+        for (const key of allKeys) {
+            const userId = key.split(':')[1];
+            const referralCount = await redis.scard(key);
+            userScores.push({ userId, referralCount });
+            console.log(key)
+        }
+
+        async function getUsername(userId) {
+            return await bot.telegram.getChat(userId).then(chat => chat.username).catch(() => null);
+        }
+        
+        // Sort users by referral count in descending order
+        userScores.sort((a, b) => b.referralCount - a.referralCount);
+        
+        let message = 'LEADERBOARD:\n';
+        for (const [index, user] of userScores.entries()) {
+            let medal = '';
+            switch (index) {
+                case 0:
+                    medal = '🥇';
+                    break;
+                case 1:
+                    medal = '🥈';
+                    break;
+                case 2:
+                    medal = '🥉';
+                    break;
+                default:
+                    medal = '';
+            }
+            // Fetch the username for the userId
+            const username = await getUsername(user.userId) || `User_${user.name}`;
+            // Append user and medal to the message
+            message += `${medal} ${username} - ${user.referralCount} referrals\n`;
+        }
+        
+        ctx.reply(message);
     } catch (error) {
         console.error("Error in 'leaderboard' command:", error);
         ctx.reply("An error occurred while generating the leaderboard.");
